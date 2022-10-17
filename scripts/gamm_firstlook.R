@@ -21,10 +21,10 @@ gamm_mod <- gamm4(num_pastyear ~ female + s(age_mri, k=4, bs='cr') +
               s(age_mri, by=female, k=4, bs='cr'), family=poisson,
               random=~(1|subid), data=final_df)
 
+
+########### LMEs
+
 first_df <- final_df[final_df$sesid == 1, ]
 first_df <- first_df[first_df$num_pastyear < 1000, ]
 pois_mod <- glm(num_pastyear ~ female*age_mri, data=first_df, family = poisson(link=log))
 summary(pois_mod)
-
-
-########### LMEs
