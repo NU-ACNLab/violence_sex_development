@@ -3,40 +3,23 @@
 ### Ellyn Butler
 ### October 10, 2022 - October 17, 2022
 
-library('lme4')
+library('lme4') #glmer.nb
 library('gamm4')
 library('pscl')
-library('remotes')
+#library('remotes')
+library('NBZIMM')
 
-install_github('nyiuab/NBZIMM', force=T, build_vignettes=F)
+#install_github('nyiuab/NBZIMM', force=T, build_vignettes=F)
 
 basedir <- '/projects/b1108/studies/mwmh/data/'
 
-demo_df <- read.csv(paste0(basedir, 'processed/demographic/demographics_2022-10-04.csv'))
-depanx_df <- read.csv(paste0(basedir, 'processed/clinical/depanx_2022-10-04.csv'))
-viol_df <- read.csv(paste0(basedir, 'processed/violence/violence_2022-10-06.csv'))
-
-df_list <- list(demo_df, depanx_df, viol_df)
-final_df <- Reduce(function(x, y) merge(x, y), df_list)
-
-final_df <- final_df[, c('subid', 'sesid', 'female', 'age_lab', 'ever', 'num_pastyear')]
-final_df <- final_df[!is.na(final_df$female) & !is.na(final_df$age_lab) & !is.na(final_df$num_pastyear), ]
+final_df <- read.csv('/projects/b1108/projects/violence_sex_development/data/combined_data.csv')
 
 # Remove outliers
 final_df <- final_df[final_df$num_pastyear < 1000, ]
 
 final_df$pastyear <- ifelse(final_df$num_pastyear > 0, 1, 0)
 
-########### Descriptive
-
-table(final_df$female)
-summary(final_df$age_lab)
-table(final_df$ever)
-
-summary(final_df$num_pastyear)
-table(final_df$num_pastyear)
-
-table(final_df$pastyear)
 
 ########### GAMMs
 
