@@ -10,17 +10,19 @@ demo_df <- read.csv(paste0(basedir, 'demographic/demographics_2022-11-07.csv'))
 viol_df <- read.csv(paste0(basedir, 'violence/violence_2022-10-06.csv'))
 dep_df <- read.csv(paste0(basedir, 'clinical/depanx_2022-10-04.csv'))
 amyg_df <- read.csv(paste0(basedir, 'neuroimaging/tabulated/amygconn_2022-11-03.csv'))
+loss_df <- read.csv(paste0(basedir, 'violence/loss_2022-11-14.csv'))
 
 # Merge
 final_df <- merge(viol_df, demo_df, by=c('subid', 'sesid'), all=TRUE)
 final_df <- merge(final_df, dep_df, by=c('subid', 'sesid'), all=TRUE)
 final_df <- merge(final_df, amyg_df, by=c('subid', 'sesid'), all=TRUE)
+final_df <- merge(final_df, loss_df, by=c('subid', 'sesid'), all=TRUE)
 
-regs <- c('region46', 'region69', 'region129', 'region139', 'region142',
-          'region174', 'region237', 'region261', 'region281')
+regs <- c('region2', 'region14', 'region237', 'region261', 'region281')
 
 final_df <- final_df[, c('subid', 'sesid', 'female', 'age_lab', 'age_mri',
-                         'ever', 'num_pastyear', 'RCADS_sum', regs)]
+                         'days_mri_minus_lab', 'ever', 'num_pastyear',
+                         'RCADS_sum', 'loss', regs)]
 
 # Remove subjects who were pilots
 final_df <- final_df[which(!(final_df$subid %in% c('MWMH001', 'MWMH102'))), ]
@@ -60,8 +62,6 @@ table(final_df$ever) # 0->237, 1->296
 summary(final_df$num_pastyear)
 table(final_df$num_pastyear)
 
-#table(final_df$pastyear)
-
 
 ########### Descriptive - before after removing NAs
 
@@ -80,13 +80,16 @@ sum(is.na(final_df$region237)) #52
 sum(is.na(final_df$region261)) #52
 sum(is.na(final_df$region281)) #54
 
-final_df2 <- na.omit(final_df)
+
+##### Survey
+survey_df <- na.omit(final_df[, c('subid', 'sesid', 'female', 'age_lab',
+                                  'num_pastyear', 'RCADS_sum')])
 
 # Number of participants
-length(unique(final_df2$subid))
+length(unique(survey_df$subid))
 
-first_subids <- final_df2[final_df2$sesid == 1, 'subid']
-second_subids <- final_df2[final_df2$sesid == 2, 'subid']
+first_subids <- survey_df[survey_df$sesid == 1, 'subid']
+second_subids <- survey_df[survey_df$sesid == 2, 'subid']
 
 # Both time points
 both_tps <- second_subids[second_subids %in% first_subids]
@@ -100,16 +103,48 @@ length(first_tp)
 second_tp <- second_subids[!(second_subids %in% first_subids)]
 length(second_tp)
 
-table(final_df2[final_df2$sesid == 1, 'female'])
-table(final_df2[final_df2$sesid == 2, 'female'])
-summary(final_df2[final_df2$sesid == 1, 'age_lab'])
-summary(final_df2[final_df2$sesid == 2, 'age_lab'])
-table(final_df2$ever)
+table(survey_df[survey_df$sesid == 1, 'female'])
+table(survey_df[survey_df$sesid == 2, 'female'])
+summary(survey_df[survey_df$sesid == 1, 'age_lab'])
+summary(survey_df[survey_df$sesid == 2, 'age_lab'])
+table(survey_df$ever)
 
-summary(final_df2$num_pastyear)
-table(final_df2$num_pastyear)
+summary(survey_df$num_pastyear)
+table(survey_df$num_pastyear)
 
-#table(final_df$pastyear)
+
+##### Survey + MRI
+mri_df <- na.omit(final_df)
+
+length(unique(mri_df$subid)) # 263
+
+first_subids <- mri_df[mri_df$sesid == 1, 'subid']
+second_subids <- mri_df[mri_df$sesid == 2, 'subid']
+
+# Both time points
+both_tps <- second_subids[second_subids %in% first_subids]
+length(both_tps)
+
+# Just first time point
+first_tp <- first_subids[!(first_subids %in% second_subids)]
+length(first_tp)
+
+# Just second time point
+second_tp <- second_subids[!(second_subids %in% first_subids)]
+length(second_tp)
+
+table(mri_df[mri_df$sesid == 1, 'female'])
+table(mri_df[mri_df$sesid == 2, 'female'])
+summary(mri_df[mri_df$sesid == 1, 'age_lab'])
+summary(mri_df[mri_df$sesid == 2, 'age_lab'])
+summary(mri_df[mri_df$sesid == 1, 'age_mri'])
+summary(mri_df[mri_df$sesid == 2, 'age_mri'])
+table(mri_df$ever)
+
+summary(mri_df$num_pastyear)
+table(mri_df$num_pastyear)
+
+summary(mri_df$days_mri_minus_lab)
 
 
 ########### Export data
