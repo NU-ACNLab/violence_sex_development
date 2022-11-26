@@ -1,7 +1,7 @@
 ### Merge all data types for final sample
 ###
 ### Ellyn Butler
-### November 7, 2022
+### November 7, 2022 - November 19, 2022
 
 
 # load data
@@ -10,7 +10,7 @@ demo_df <- read.csv(paste0(basedir, 'demographic/demographics_2022-11-07.csv'))
 viol_df <- read.csv(paste0(basedir, 'violence/violence_2022-10-06.csv'))
 dep_df <- read.csv(paste0(basedir, 'clinical/depanx_2022-10-04.csv'))
 amyg_df <- read.csv(paste0(basedir, 'neuroimaging/tabulated/amygconn_2022-11-03.csv'))
-loss_df <- read.csv(paste0(basedir, 'violence/loss_2022-11-14.csv'))
+loss_df <- read.csv(paste0(basedir, 'violence/loss_conflict_2022-11-19.csv'))
 
 # Merge
 final_df <- merge(viol_df, demo_df, by=c('subid', 'sesid'), all=TRUE)
@@ -22,7 +22,7 @@ regs <- c('region2', 'region14', 'region237', 'region261', 'region281')
 
 final_df <- final_df[, c('subid', 'sesid', 'female', 'age_lab', 'age_mri',
                          'days_mri_minus_lab', 'ever', 'num_pastyear',
-                         'RCADS_sum', 'loss', regs)]
+                         'RCADS_sum', 'peer_conflict', regs)]
 
 # Remove subjects who were pilots
 final_df <- final_df[which(!(final_df$subid %in% c('MWMH001', 'MWMH102'))), ]
