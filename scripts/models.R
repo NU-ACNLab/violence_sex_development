@@ -132,11 +132,13 @@ int2.mods <- tab_model(int2.nofemale, int2.female, int2.female.peer)
 
 ################################################################################
 ### 5) Amygdala connectivity
-# nothing significant
+# nothing significant... hm, no
+#https://stats.stackexchange.com/questions/242109/model-failed-to-converge-warning-in-lmer
 
 region2 <- lmer(region2 ~ age_lab + female + num_pastyear + (1|subid), data = final_df, na.action = na.exclude)
 region2.interact <- update(region2, ~. + female:num_pastyear)
-region14 <- lmer(region14 ~ age_lab + female + num_pastyear + (1|subid), data = final_df)
+region14 <- lmer(region14 ~ age_lab + female + num_pastyear + (1|subid),
+                            data = final_df, na.action = na.exclude)
 region14.interact <- update(region14, ~. + female:num_pastyear)
 region237 <- lmer(region237 ~ age_lab + female + num_pastyear + (1|subid), data = final_df, na.action = na.exclude)
 region237.interact <- update(region237, ~. + female:num_pastyear)
@@ -145,10 +147,26 @@ region261.interact <- update(region261, ~. + female:num_pastyear)
 region281 <- lmer(region281 ~ age_lab + female + num_pastyear + (1|subid), data = final_df, na.action = na.exclude)
 region281.interact <- update(region281, ~. + female:num_pastyear)
 
-amygconn_main_mods <- tab_model(region2, region14, region237, region261, region281)
+amygconn_main_mods <- tab_model(region2, region14, region237, region261, region281,
+                      digits=3)
 
 amygconn_int_mods <- tab_model(region2.interact, region14.interact,
-                     region237.interact, region261.interact, region281.interact)
+                     region237.interact, region261.interact, region281.interact,
+                     digits=3)
+
+# Adjusting for multiple comparisons using FDR
+# age
+p.adjust(c(0.211, 0.472, 0.009, 0.608, 0.659), method='fdr')
+
+# female
+p.adjust(c(0.311, 0.045, 0.266, 0.223, 0.106), method='fdr')
+
+# violence
+p.adjust(c(0.656, 0.447, 0.526, 0.840, 0.342), method='fdr')
+
+# female x violence
+p.adjust(c(0.037, 0.538, 0.083, 0.117, 0.221), method='fdr')
+
 
 ################################################################################
 ### SOME DIAGNOSTICS, I.E. PART OF THE LIMITATIONS
