@@ -1,8 +1,8 @@
-### This script describes co-occurrences of violence exposure types and
-### proportions pastyear and last year
+### This script tests if females have experienced fewer violence exposures in
+### the past year than males
 ###
 ### Ellyn Butler
-### July 4, 2023
+### July 4, 2023 - July 6, 2023
 
 library('ggplot2')
 
@@ -21,7 +21,7 @@ mediators <- c('SomatomotorDorsal', 'SomatomotorLateral', 'CinguloOpercular',
                'FrontoParietal', 'Salience', 'VentralAttention',
                'DorsalAttention', 'MedialTemporalLobe', 'Reward')
 
-df <- df[, c('subid', 'sesid', 'female', 'num_pastyear', 'RCADS_sum',
+df <- df[, c('subid', 'sesid', 'female', 'ever', 'num_pastyear', 'RCADS_sum',
              mediators, paste0('etv', 1:7, '_pastyear'))]
 
 # remove rows with NAs
@@ -33,45 +33,15 @@ df <- df[df$num_pastyear < 100, ]
 # use only the first time point (get to multilevel later: p16 of `mediation` pdf)
 viol_df <- df[df$sesid == 1, ]
 
-nf <- nrow(viol_df[viol_df$female == 1, ])
-nm <- nrow(viol_df[viol_df$female == 0, ])
 
-# plot
-pastyear_df <- data.frame(Variable=paste0('ETV', 1:7),
-                      Violence=c('Family Hurt or Killed', 'Friends Hurt or Killed',
-                        'Saw Attacked Knife', 'Saw Shot', 'Shoved Kicked Punched',
-                        'Attacked Knife', 'Shot At'),
-                      Sex=c(rep('Female', 7), rep('Male', 7)),
-                      Sum=c(sum(viol_df[viol_df$female == 1, 'etv1_pastyear'])/nf,
-                            sum(viol_df[viol_df$female == 1, 'etv2_pastyear'])/nf,
-                            sum(viol_df[viol_df$female == 1, 'etv3_pastyear'])/nf,
-                            sum(viol_df[viol_df$female == 1, 'etv4_pastyear'])/nf,
-                            sum(viol_df[viol_df$female == 1, 'etv5_pastyear'])/nf,
-                            sum(viol_df[viol_df$female == 1, 'etv6_pastyear'])/nf,
-                            sum(viol_df[viol_df$female == 1, 'etv7_pastyear'])/nf,
-                            sum(viol_df[viol_df$female == 0, 'etv1_pastyear'])/nm,
-                            sum(viol_df[viol_df$female == 0, 'etv2_pastyear'])/nm,
-                            sum(viol_df[viol_df$female == 0, 'etv3_pastyear'])/nm,
-                            sum(viol_df[viol_df$female == 0, 'etv4_pastyear'])/nm,
-                            sum(viol_df[viol_df$female == 0, 'etv5_pastyear'])/nm,
-                            sum(viol_df[viol_df$female == 0, 'etv6_pastyear'])/nm,
-                            sum(viol_df[viol_df$female == 0, 'etv7_pastyear'])/nm)
-                      )
+################################## Statistics ##################################
 
+# Males experienced twice as many violence exposures in the past year as females,
+# on average
+t.test(num_pastyear ~ female, data=viol_df)
 
-pastyear_df$Violence <- ordered(pastyear_df$Violence, c('Family Hurt or Killed', 'Friends Hurt or Killed',
-  'Saw Attacked Knife', 'Saw Shot',
-  'Attacked Knife', 'Shot At', 'Shoved Kicked Punched'))
+# Percent of people who had ever experienced
+sum(viol_df$ever)/nrow(viol_df) # 54.2%
 
-prop_pastyear_plot <- ggplot(pastyear_df, aes(x=Violence, y=Sum, fill=Violence)) +
-  facet_grid(. ~ Sex) + theme_linedraw() + geom_bar(stat='identity', position='dodge') +
-  theme(legend.position='none', axis.title.x=element_blank(), axis.title.y=element_text(size=7),
-		panel.spacing=unit(.1, 'lines'), axis.text.y=element_text(size=6),
-    axis.text.x = element_text(angle=45, hjust=1, size=6)) +
-  ylab('Average umber of times in the past year') +
-  scale_fill_manual(values=c('deepskyblue3', 'steelblue1', 'springgreen3',
-  'palegreen1', 'pink1', 'violetred1', 'firebrick2'))
-
-jpeg('/projects/b1108/projects/violence_sex_development/plots/pastyear_violence_ses-1.jpg', res=300, units='mm', width=120, height=100)
-prop_pastyear_plot
-dev.off()
+# Percent of people who had experienced in the past year
+sum(viol_df$ever > 0)/nrow(viol_df) # 54.2%
