@@ -32,7 +32,7 @@ df <- df[complete.cases(df), ]
 # remove extreme outlier
 df <- df[df$num_pastyear < 100, ]
 
-# use only the first time point (get to multilevel later: p16 of `mediation` pdf)
+# use only the first time point
 viol_df <- df[df$sesid == 1, ]
 
 
@@ -43,6 +43,7 @@ viol_df$Sex <- recode(viol_df$female, `1`='Female', `0`='Male')
 viol_df$Sex <- ordered(viol_df$Sex, c('Male', 'Female'))
 
 int_mod <- lm(RCADS_sum ~ female*num_pastyear, data = viol_df)
+# ^ July 10, 2023: still significant if filter for fewer than 40 events
 
 int_plot <- ggplot(viol_df, aes(num_pastyear, RCADS_sum, color=Sex)) +
       geom_smooth(method = 'lm') +
@@ -54,6 +55,7 @@ int_plot <- ggplot(viol_df, aes(num_pastyear, RCADS_sum, color=Sex)) +
 ##### Ventral Attention
 
 net_mod <- lm(VentralAttention ~ female*num_pastyear, data = viol_df)
+# ^ July 10, 2023: still significant if filter for fewer than 40 events
 
 net_plot <- ggplot(viol_df, aes(num_pastyear, VentralAttention, color=Sex)) +
       geom_smooth(method = 'lm') +
