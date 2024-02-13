@@ -75,15 +75,17 @@ cor(d$x, d$y) # 0.64
 cor(d$m, d$y) # 0.79
 
 ###### Y ~ X
-m1 <- lme4::lmer(y ~ x + (1 + x | subid), data = d)
+ctrl <- lmeControl(opt='optim')
+m1 <- nlme::lme(y ~ x, random = ~ 1 + x | subid, data = d,
+                control = ctrl)
 summary(m1)
 
 ###### M ~ X
-m2 <- lme4::lmer(m ~ x + (1 + x | subid), data = d)
+m2 <- nlme::lme(m ~ x, random = ~ 1 + x | subid, data = d,
+                control = ctrl)
 summary(m2)
 
 ###### Y ~ M + X
-ctrl <- lmeControl(opt='optim')
 m3 <- nlme::lme(y ~ m + x, random = ~ m + x | subid, data = d,
                 control = ctrl)
 summary(m3)
@@ -102,8 +104,7 @@ stacked[stacked$subid == 1, ]
 ## fit model
 mm <- nlme::lme(z ~ 0 + sm + sm:x + sy + sy:m + sy:x, data = stacked,
                   random = list(~ 0 + sm + sm:x + sy + sy:m + sy:x | subid, ~ 0 + sm | sesid),
-                  control = ctrl) #"invalid formula for groups"
-                  # https://stats.stackexchange.com/questions/40647/lme-error-iteration-limit-reached
+                  control = ctrl)
 
 
 ## view summary and save summary object to 'smm'

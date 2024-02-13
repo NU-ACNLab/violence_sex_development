@@ -92,8 +92,10 @@ stacked[stacked$subid == 1, ]
 ## fit model
 mm <- nlme::lme(z ~ 0 + sm + sm:x + sy + sy:m + sy:x, data = stacked,
                   random = list(~ 0 + sm + sm:x + sy + sy:m + sy:x | subid, ~ 0 + sm | sesid),
-                  control = ctrl) #"invalid formula for groups"
-                  # https://stats.stackexchange.com/questions/40647/lme-error-iteration-limit-reached
+                  control = ctrl)
+                  #Error in lme.formula(z ~ 0 + sm + sm:x + sy + sy:m + sy:x, data = stacked,  :
+                  #optim problem, convergence error code = 1
+                  #message =
 
 
 ## view summary and save summary object to 'smm'
