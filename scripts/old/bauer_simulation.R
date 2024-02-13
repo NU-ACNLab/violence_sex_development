@@ -3,13 +3,15 @@
 ### https://stats.oarc.ucla.edu/r/faq/how-can-i-perform-mediation-with-multilevel-data-method-2/
 ###
 ### Ellyn Butler
-### January 28, 2024
+### January 28, 2024 - January 31, 2024
 
+set.seed(2024)
 
 library(lme4)
 library(reshape2)
 library(nlme)
 library(MASS)
+library(lmerTest) #confint
 
 ########################### Four sessions per person ###########################
 
@@ -30,7 +32,7 @@ eyj <- data.frame(e1 = rnorm(numsub, 0, sqrt(.45)),
 bvn <- mvrnorm(numsub, mu = c(.6, .6), Sigma = matrix(c(.16, .113, .113, .16), nrow=2, ncol=2))
 bvn <- data.frame(bvn)
 names(bvn) <- c('a', 'b')
-c <- rnorm(numsub, .2, sqrt(.04))
+c <- rnorm(numsub, .2, sqrt(.04)) #c-prime
 xbarj <- rnorm(numsub, 0, 1)
 
 #NOTE: Level 2 units are people, so j indexes the person
@@ -66,17 +68,27 @@ for (j in 1:numsub) {
 
 d <- rbind(d1, d2, d3, d4)
 
+# checking correlations
+cor(d$x, d$m) # 0.595
+cor(d$x, d$y) # 0.605
+cor(d$m, d$y) # 0.775
+
 ###### Y ~ X
-m1 <- lmer(y ~ x + (1 + x | subid), data = d)
+m1 <- lme4::lmer(y ~ x + (1 + x | subid), data = d)
 summary(m1)
 
 ###### M ~ X
-m2 <- lmer(m ~ x + (1 + x | subid), data = d)
+m2 <- lme4::lmer(m ~ x + (1 + x | subid), data = d)
 summary(m2)
 
 ###### Y ~ M + X
-m3 <- lmer(y ~ m + x + (1 + m + x | subid), data = d)
+m3 <- lme4::lmer(y ~ m + x + (1 + m + x | subid), data = d) #singular... February 6, 2024: now not???
 summary(m3)
+#m3.2 <- lme4::lmer(y ~ m + x + (m + x | subid), data = d) #not singular...
+#summary(m3.2)
+
+#m3e <- nlme::lme(y ~ m + x, random = ~ 1 + m + x | subid, data = d) #... convergence problem
+#m3e.2 <- nlme::lme(y ~ m + x, random = ~ m + x | subid, data = d) #... convergence problem
 
 # reshape #fid to sesid
 stacked <- melt(d, id.vars = c("sesid", "subid", "x", "m"),
@@ -90,14 +102,38 @@ stacked <- within(stacked, {
 stacked[stacked$subid == 1, ]
 
 ## fit model... ~~~ SINGULAR ISSUE ~~~
-mm <- lmer(z ~ 0 + sm + sm:x + sy + sy:m + sy:x +
+mm1 <- lme4::lmer(z ~ 0 + sm + sm:x + sy + sy:m + sy:x +
                (0 + sm + sm:x + sy + sy:m + sy:x | subid) +
-               (0 + sm | sesid), data = stacked)
+               (0 + sm | sesid), data = stacked) # singular
 
+mm1.2 <- lme4::lmer(z ~ 0 + sm + sm:x + sy + sy:m + sy:x +
+                     (0 + sm + sm:x + sy + sy:m + sy:x | subid) +
+                     (0 + sm | sesid), data = stacked) # singular
 
+mm2 <- lme4::lmer(z ~ 0 + sm + sm:x + sy + sy:m + sy:x +
+               (0 + sm | subid) +
+               (0 + sm | sesid), data = stacked) # still singular
 
+mm3 <- lme4::lmer(z ~ 0 + sm +
+               (0 + sm | subid) +
+               (0 + sm | sesid), data = stacked) # still singular!!!
 
+mm4 <- lme4::lmer(z ~ 0 + sm + sm:x + sy + sy:m + sy:x +
+               (0 + sm + sm:x + sy + sy:m + sy:x | subid), data = stacked) # singular
 
+mm5 <- lme4::lmer(z ~ 0 + sm + sm:x + sy + sy:m + sy:x +
+               (0 + sm | subid), data = stacked) # NOT singular!!!
+
+mm6 <- lme4::lmer(z ~ 0 + sm + sm:x + sy + sy:m + sy:x +
+              (0 + sy | subid) + (0 + sm | sesid), data = stacked)
+
+mm7 <- lme4::lmer(z ~ -1 + sm + sm:x + sy + sy:m + sy:x +
+              (-1 + sm + sm:x + sy + sy:m + sy:x | subid) +
+              (-1 + sm | sesid), data = stacked) # singular
+
+mm8 <- lme4::lmer(z ~ 1 + sm + sm:x + sy + sy:m + sy:x +
+              (1 + sm + sm:x + sy + sy:m + sy:x | subid) +
+              (1 + sm | sesid), data = stacked) # rank deficient and singular
 
 ## view summary and save summary object to 'smm'
 (smm <- summary(mm))
