@@ -86,8 +86,12 @@ m2 <- nlme::lme(m ~ x, random = ~ 1 + x | subid, data = d,
 summary(m2)
 
 ###### Y ~ M + X
-m3 <- nlme::lme(y ~ m + x, random = ~ m + x | subid, data = d,
-                control = ctrl)
+m3 <- nlme::lme(y ~ m + x, random = list(subid = pdDiag(~ m + x)), data = d,
+                control = ctrl) # not converging: intervals(m3, which='var-cov')... Noelle not surprised by this
+                # Constrain some of the covariance entries to be the same, or
+                # some other assumption about the nature of the covariance matrix
+                # TO DO: Noelle will write out model formulations
+                # TO DO: How does pdDiag work?
 summary(m3)
 
 # reshape #fid to sesid
@@ -112,8 +116,9 @@ mm <- nlme::lme(z ~ 0 + sm + sm:x + sy + sy:m + sy:x, data = stacked,
 
 ## fit model
 mm.alt <- nlme::lme(z ~ 0 + sm + sm:x + sy + sy:m + sy:x,
-    data = stacked, random = ~0 + sm + sm:x + sy + sy:m +
-        sy:x | subid, weights = varIdent(form = ~1 | variable), control = ctrl)
+    data = stacked, random = pdBlocked(list(subid = pdDiag(~ 0 + sm + sm:x + sy + sy:m +
+        sy:x), sesid = list(~ 0 + sm))), control = ctrl) #weights = varIdent(form = ~1 | variable),
+        # TO DO: Figure out how to have sesid nested within subid
 
 ## view summary
 summary(mm.alt)

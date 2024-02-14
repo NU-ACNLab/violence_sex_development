@@ -74,7 +74,7 @@ m2 <- nlme::lme(m ~ x, random = ~ 1 + x | subid, data = d,
 summary(m2)
 
 ###### Y ~ M + X
-m3 <- nlme::lme(y ~ m + x, random = ~ m + x | subid, data = d,
+m3 <- nlme::lme(y ~ m + x, random = list(subid = pdDiag(~ m + x)), data = d,
                 control = ctrl) #Error: ... fewer observations than random effects in all level 1 groups
 summary(m3)
 
