@@ -1,7 +1,7 @@
 ### Merge all data types for final sample
 ###
 ### Ellyn Butler
-### August 7, 2024
+### November 7, 2022 - November 19, 2022
 
 
 # load data
@@ -9,18 +9,20 @@ basedir <- '/projects/b1108/studies/mwmh/data/processed/'
 demo_df <- read.csv(paste0(basedir, 'demographic/demographics_2022-11-07.csv'))
 viol_df <- read.csv(paste0(basedir, 'violence/violence_2022-10-06.csv'))
 dep_df <- read.csv(paste0(basedir, 'clinical/depanx_2022-10-04.csv'))
-exp_df <- read.csv(paste0(basedir, 'neuroimaging/tabulated/expansiveness_2024-08-11.csv'))
+amyg_df <- read.csv(paste0(basedir, 'neuroimaging/tabulated/amygconn_2022-11-03.csv'))
+loss_df <- read.csv(paste0(basedir, 'violence/loss_conflict_2022-11-19.csv'))
 
 # Merge
 final_df <- merge(viol_df, demo_df, by=c('subid', 'sesid'), all=TRUE)
 final_df <- merge(final_df, dep_df, by=c('subid', 'sesid'), all=TRUE)
-final_df <- merge(final_df, exp_df, by=c('subid', 'sesid'), all=TRUE)
+final_df <- merge(final_df, amyg_df, by=c('subid', 'sesid'), all=TRUE)
+final_df <- merge(final_df, loss_df, by=c('subid', 'sesid'), all=TRUE)
 
-final_df$depression <- rowSums(final_df[, paste0('RCADS_', c(1, 4, 8, 10, 13, 16, 15, 18, 19, 21, 24), 'r')])
+regs <- c('region2', 'region14', 'region237', 'region261', 'region281')
 
 final_df <- final_df[, c('subid', 'sesid', 'female', 'age_lab', 'age_mri',
                          'days_mri_minus_lab', 'ever', 'num_pastyear',
-                         'depression', grep('salven', names(exp_df), value = TRUE))]
+                         'RCADS_sum', 'peer_conflict', regs)]
 
 # Remove subjects who were pilots
 final_df <- final_df[which(!(final_df$subid %in% c('MWMH001', 'MWMH102'))), ]

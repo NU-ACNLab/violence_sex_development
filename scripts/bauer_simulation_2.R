@@ -96,7 +96,10 @@ mm <- nlme::lme(z ~ 0 + sm + sm:x + sy + sy:m + sy:x, data = stacked,
                   #Error in lme.formula(z ~ 0 + sm + sm:x + sy + sy:m + sy:x, data = stacked,  :
                   #optim problem, convergence error code = 1
                   #message =
-
+                  #sy:x = c_j'
+mma <- nlme::lme(z ~ 0 + sm + sm:x + sy + sy:m + sy:x, data = stacked,
+                  random = list(~ 0 + sm + sm:x + sy + sy:m | subid, ~ 0 + sm | sesid),
+                  control = ctrl)
 
 ## view summary and save summary object to 'smm'
 (smm <- summary(mm))
@@ -110,20 +113,21 @@ mm.alt <- nlme::lme(z ~ 0 + sm + sm:x + sy + sy:m + sy:x,
 summary(mm.alt)
 
 ## view fixed effects estimates
-fixef(mm)
+fixef(mma)
 
 ## product of 'a' and 'b' paths
-(ab <- prod(fixef(mm)[c("sm:x", "sy:m")]))
+(ab <- prod(fixef(mma)[c("sm:x", "sy:m")]))
 
 ## covariance between random effects
-(rcov <- as.numeric(VarCorr(mm)[row.names(VarCorr(mm)) == 'sy:m', 5]))
+(rcov <- as.numeric(VarCorr(mma)[row.names(VarCorr(mma)) == 'sy:m', 5]))
 #should be close to .113/.16
+#Q: If we assume that the random effects are equal for everyone, this is 0, right?
 
 ## indirect effect
 ab + rcov # .6^2 + .113/.16 = 1.066... very close! good
 
 ## total effect
-ab + rcov + fixef(mm)["x:sy"]
+ab + rcov + fixef(mma)["x:sy"]
 
 
 # TO DO
