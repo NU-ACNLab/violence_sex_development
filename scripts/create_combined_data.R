@@ -9,18 +9,18 @@ basedir <- '/projects/b1108/studies/mwmh/data/processed/'
 demo_df <- read.csv(paste0(basedir, 'demographic/demographics_2022-11-07.csv'))
 viol_df <- read.csv(paste0(basedir, 'violence/violence_2022-10-06.csv'))
 dep_df <- read.csv(paste0(basedir, 'clinical/depanx_2022-10-04.csv'))
-exp_df <- read.csv(paste0(basedir, 'neuroimaging/tabulated/expansiveness_2024-08-11.csv'))
+net_df <- read.csv(paste0(basedir, 'neuroimaging/tabulated/surf_network_metrics_2024-09-09.csv'))
 
 # Merge
 final_df <- merge(viol_df, demo_df, by=c('subid', 'sesid'), all=TRUE)
 final_df <- merge(final_df, dep_df, by=c('subid', 'sesid'), all=TRUE)
-final_df <- merge(final_df, exp_df, by=c('subid', 'sesid'), all=TRUE)
+final_df <- merge(final_df, net_df, by=c('subid', 'sesid'), all=TRUE)
 
 final_df$depression <- rowSums(final_df[, paste0('RCADS_', c(1, 4, 8, 10, 13, 16, 15, 18, 19, 21, 24), 'r')])
 
 final_df <- final_df[, c('subid', 'sesid', 'female', 'age_lab', 'age_mri',
                          'days_mri_minus_lab', 'ever', 'num_pastyear',
-                         'depression', grep('salven', names(exp_df), value = TRUE))]
+                         'depression', 'RCADS_sum', 'exp_b_pos', 'FC_b_pos')] #BC_b_pos
 
 # Remove subjects who were pilots
 final_df <- final_df[which(!(final_df$subid %in% c('MWMH001', 'MWMH102'))), ]
@@ -145,9 +145,9 @@ table(mri_df$num_pastyear)
 summary(mri_df$days_mri_minus_lab)
 
 
-########### Export data
+########### netort data
 
-write.csv(final_df, '/projects/b1108/projects/violence_sex_development/data/combined_data.csv', row.names=FALSE)
+write.csv(final_df, '/projects/b1108/projects/violence_sex_development/data/combined_data_2024-09-09.csv', row.names=FALSE)
 
 
 
