@@ -9,7 +9,7 @@ basedir <- '/projects/b1108/studies/mwmh/data/processed/'
 demo_df <- read.csv(paste0(basedir, 'demographic/demographics_2022-11-07.csv'))
 viol_df <- read.csv(paste0(basedir, 'violence/violence_2022-10-06.csv'))
 dep_df <- read.csv(paste0(basedir, 'clinical/depanx_2022-10-04.csv'))
-net_df <- read.csv(paste0(basedir, 'neuroimaging/tabulated/surf_network_metrics_2024-09-09.csv'))
+net_df <- read.csv(paste0(basedir, 'neuroimaging/tabulated/surf_network_metrics_2024-09-13.csv'))
 
 # Merge
 final_df <- merge(viol_df, demo_df, by=c('subid', 'sesid'), all=TRUE)
@@ -147,7 +147,7 @@ summary(mri_df$days_mri_minus_lab)
 
 ########### netort data
 
-write.csv(final_df, '/projects/b1108/projects/violence_sex_development/data/combined_data_2024-09-09.csv', row.names=FALSE)
+write.csv(final_df, '/projects/b1108/projects/violence_sex_development/data/combined_data_2024-09-13.csv', row.names=FALSE)
 
 
 

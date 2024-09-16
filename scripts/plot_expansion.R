@@ -22,15 +22,14 @@ d1 <- d[d$sesid == 1, ]
 d2 <- d[d$sesid == 2, ]
 
 ##### Identify the subjects above and below the median
-depmean <- mean(d2$depression)
 low_dep_indices <- c()
 high_dep_indices <- c()
 for (i in 1:length(rds_list)) { 
     subid <- strsplit(strsplit(file_list[i], '/')[[1]][10], '-')[[1]][2]
     if (subid %in% d2$subid) {
-        if (d2[d2$subid == subid, 'depression'] < depmean) {
+        if (d2[d2$subid == subid, 'depression'] < 6) {
             low_dep_indices <- c(low_dep_indices, i)
-        } else {
+        } else if (d2[d2$subid == subid, 'depression'] > 11) {
             high_dep_indices <- c(high_dep_indices, i)
         }
     }
@@ -52,13 +51,22 @@ for (i in 1:length(low_list)) {
 left <- left/length(low_list) 
 right <- right/length(low_list) 
 
-lowrds <- rds_list[[1]]
+probmap <- read_cifti('/projects/b1108/studies/mwmh/data/processed/neuroimaging/surf/sub-MWMH200/ses-2/func/sub-MWMH200_ses-2_task-rest_space-fsLR_desc-medpostproc_meanmed.dscalar.nii')
 
-#Q: not a valid xifti after these next two... how to make valid?
-lowrds$active$data$cortex_left[,8] <- left 
-lowrds$active$data$cortex_right[,8] <- right
+# move back the mwall
+probmap <- move_from_mwall(probmap)
 
-view_xifti_surface(lowrds, zlim = c(0, 1), colors = '3-class PuRd', idx = 8)
+probmap$data$cortex_left[,1] <- left
+probmap$data$cortex_right[,1] <- right
+
+# move out the mwall
+probmap <- move_to_mwall(probmap, values = NA) #this doesn't seem to be working
+#probmap$data$cortex_left[,1][probmap$data$cortex_left[,1] == 1] <- 0 #gets rid of dots...
+#probmap$data$cortex_right[,1][probmap$data$cortex_right[,1] == 1] <- 0 #gets rid of dots...
+
+saveRDS(probmap, '/projects/b1108/studies/mwmh/data/processed/neuroimaging/group/lowdep_propsn.rds')
+lowmap <- probmap
+view_xifti_surface(lowmap, zlim = c(0, 1), colors = 'BuPu') #What is up with the dots?
 
 ##### Plot high dep
 for (i in 1:length(high_list)) {
@@ -73,10 +81,31 @@ for (i in 1:length(high_list)) {
 left <- left/length(high_list) 
 right <- right/length(high_list) 
 
-highrds <- rds_list[[1]]
+probmap <- read_cifti('/projects/b1108/studies/mwmh/data/processed/neuroimaging/surf/sub-MWMH200/ses-2/func/sub-MWMH200_ses-2_task-rest_space-fsLR_desc-medpostproc_meanmed.dscalar.nii')
 
-#Q: not a valid xifti after these next two... how to make valid?
-highrds$active$data$cortex_left[,8] <- left 
-highrds$active$data$cortex_right[,8] <- right
+# move back the mwall
+probmap <- move_from_mwall(probmap)
 
-view_xifti_surface(highrds, zlim = c(0, 1), colors = '3-class PuRd', idx = 8)
+probmap$data$cortex_left[,1] <- left
+probmap$data$cortex_right[,1] <- right
+
+# move out the mwall
+probmap <- move_to_mwall(probmap, values = NA) #this doesn't seem to be working
+probmap$data$cortex_left[,1][probmap$data$cortex_left[,1] == 1] <- 0 #gets rid of dots...
+probmap$data$cortex_right[,1][probmap$data$cortex_right[,1] == 1] <- 0 #gets rid of dots...
+
+saveRDS(probmap, '/projects/b1108/studies/mwmh/data/processed/neuroimaging/group/highdep_propsn.rds')
+highmap <- probmap 
+view_xifti_surface(highmap, zlim = c(0, 1), colors = 'BuPu') #What is up with the dots?
+
+######### Illustration with single male subjects
+
+# high depression, high expansion - MWMH379
+d2[d2$female == 0 & d2$depression > 20 & d2$exp_b_pos > .3, ]
+highdep <- readRDS('/projects/b1108/studies/mwmh/data/processed/neuroimaging/surfnet/sub-MWMH379/ses-2/network_membership_pos.rds')
+view_xifti_surface(highdep$active, idx = 8)
+
+# low depression, low expansion - MWMH271
+d2[d2$female == 0 & d2$depression < 15 & d2$exp_b_pos < .2, ]
+lowdep <- readRDS('/projects/b1108/studies/mwmh/data/processed/neuroimaging/surfnet/sub-MWMH271/ses-2/network_membership_pos.rds')
+view_xifti_surface(lowdep$active, idx = 8)
