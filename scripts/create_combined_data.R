@@ -18,7 +18,8 @@ final_df <- merge(final_df, net_df, by=c('subid', 'sesid'), all=TRUE)
 
 final_df$depression <- rowSums(final_df[, paste0('RCADS_', c(1, 4, 8, 10, 13, 16, 15, 18, 19, 21, 24), 'r')])
 
-final_df <- final_df[, c('subid', 'sesid', 'female', 'age_lab', 'age_mri',
+final_df <- final_df[, c('subid', 'sesid', 'black', 'white', 'otherrace', 
+                         'BMIperc', 'PubCat', 'female', 'age_lab', 'age_mri',
                          'days_mri_minus_lab', 'ever', 'num_pastyear',
                          'depression', 'RCADS_sum', 'exp_b_pos', 'FC_b_pos')] #BC_b_pos
 
@@ -147,7 +148,7 @@ summary(mri_df$days_mri_minus_lab)
 
 ########### netort data
 
-write.csv(final_df, '/projects/b1108/projects/violence_sex_development/data/combined_data_2024-09-13.csv', row.names=FALSE)
+write.csv(final_df, '/projects/b1108/projects/violence_sex_development/data/combined_data_2024-09-23.csv', row.names=FALSE)
 
 
 

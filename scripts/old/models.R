@@ -1,206 +1,157 @@
-### This script runs all of the models for the sex differences in internalizing,
-### violence exposure, and amygdala connectivity paper
+### This code focuses on session 2 for the analyses
 ###
-### Ellyn Butler & Ryan Chen
-### November 25, 2022
+### Ellyn Butler
+### September 10, 2024
 
-set.seed(2022)
+set.seed(2000)
 
-### Load libraries
-library(nlme)
-library(lme4)
-library(sjPlot)
+library(reshape2)
+library(MASS)
 library(dplyr)
+library(sjPlot)
 library(ggplot2)
+library(ggpubr)
+#library(lmerTest) #confint
 
-### Load data
-base_dir <- '/Users/flutist4129/Documents/Northwestern/projects/violence_sex_development/'
-final_df <- read.csv(paste0(base_dir, 'data/combined_data.csv'))
-final_df <- final_df[final_df$num_pastyear < 1000, ]
-final_df$pastyear <- ifelse(final_df$num_pastyear > 0, 1, 0)
-final_df$RCADS_sum <- final_df$RCADS_sum + 1
+d <- read.csv('~/Documents/Northwestern/projects/violence_sex_development/data/combined_data_2024-09-09.csv')
+d <- d[!is.na(d$exp_b_pos) & !is.na(d$FC_b_pos) & !is.na(d$RCADS_sum) & !is.na(d$num_pastyear), ]
+d1 <- d[d$sesid == 1, ]
+d2 <- d[d$sesid == 2, ]
+
+dim(d2) # N = 220
+range(d2$age_mri) # 14 - 18
+mean(d2$ever) # 55.45%
+mean(d2$num_pastyear > 0) # 45.45%
+mean(d2[d2$female == 1, 'num_pastyear']) # 1.16
+mean(d2[d2$female == 0, 'num_pastyear']) # 2.95
+t.test(num_pastyear ~ female, data = d2)
+
+################### Plot
+viol_df <- read.csv('~/Documents/Northwestern/studies/mwmh/data/processed/violence/violence_2022-10-06.csv')
+
+viol_df <- merge(viol_df, d2)
+nf <- nrow(viol_df[viol_df$female == 1, ])
+nm <- nrow(viol_df[viol_df$female == 0, ])
+
+pastyear_df <- data.frame(Variable=paste0('ETV', 1:7),
+                      Violence=c('Family Hurt or Killed', 'Friends Hurt or Killed',
+                        'Saw Attacked Knife', 'Saw Shot', 'Shoved Kicked Punched',
+                        'Attacked Knife', 'Shot At'),
+                      Sex=c(rep('Female', 7), rep('Male', 7)),
+                      Sum=c(sum(viol_df[viol_df$female == 1, 'etv1_pastyear'])/nf,
+                            sum(viol_df[viol_df$female == 1, 'etv2_pastyear'])/nf,
+                            sum(viol_df[viol_df$female == 1, 'etv3_pastyear'])/nf,
+                            sum(viol_df[viol_df$female == 1, 'etv4_pastyear'])/nf,
+                            sum(viol_df[viol_df$female == 1, 'etv5_pastyear'])/nf,
+                            sum(viol_df[viol_df$female == 1, 'etv6_pastyear'])/nf,
+                            sum(viol_df[viol_df$female == 1, 'etv7_pastyear'])/nf,
+                            sum(viol_df[viol_df$female == 0, 'etv1_pastyear'])/nm,
+                            sum(viol_df[viol_df$female == 0, 'etv2_pastyear'])/nm,
+                            sum(viol_df[viol_df$female == 0, 'etv3_pastyear'])/nm,
+                            sum(viol_df[viol_df$female == 0, 'etv4_pastyear'])/nm,
+                            sum(viol_df[viol_df$female == 0, 'etv5_pastyear'])/nm,
+                            sum(viol_df[viol_df$female == 0, 'etv6_pastyear'])/nm,
+                            sum(viol_df[viol_df$female == 0, 'etv7_pastyear'])/nm)
+                      )
 
 
-### 1) ARE MALES EXPOSED TO VIOLENCE MORE THAN FEMALES, DOES GAP WIDEN ACROSS DEV
-### violence.male is the main effect only model (female signif at p = 0.00508)
-# ^ ... THIS DOESN'T EXIST. Do you mean violence.female?
-### control.stress.female is the model with interaction (interact not signif)
-# ^ ... THIS DOESN'T EXIST. Do you mean violence.female.age?
-### for reporting purposes:
-### confint(violence.male, parm = 'var-cov') = (1.6127, 3.1533), var.est=2.225
-### confint(violence.male.age, parm = 'var-cov') = (1.62, 3.171), var.est=2.267
+pastyear_df$Violence <- ordered(pastyear_df$Violence, c('Family Hurt or Killed', 'Friends Hurt or Killed',
+  'Saw Attacked Knife', 'Saw Shot',
+  'Attacked Knife', 'Shot At', 'Shoved Kicked Punched'))
 
-violence.nofemale <- glmer.nb(num_pastyear ~ age_lab + (1|subid), data = final_df, nAGQ = 17)
-violence.female <- update(violence.nofemale, ~ . + female)
-violence.female.age <- update(violence.female, ~ . + female:age_lab)
-anova(violence.nofemale, violence.female)
-anova(violence.female, violence.female.age)
-confint(violence.female, method = 'boot') # not converging... do we need bootstrap CIs?
-confint(violence.female.age, method = 'boot')
+prop_pastyear_plot <- ggplot(pastyear_df, aes(x=Violence, y=Sum, fill=Violence)) +
+  facet_grid(. ~ Sex) + theme_linedraw() + geom_bar(stat='identity', position='dodge') +
+  theme(legend.position='none', axis.title.x=element_blank(), axis.title.y=element_text(size=7),
+		panel.spacing=unit(.1, 'lines'), axis.text.y=element_text(size=6),
+    axis.text.x = element_text(angle=45, hjust=1, size=6)) +
+  ylab('Average number of times in the past year') +
+  scale_fill_manual(values=c('deepskyblue3', 'steelblue1', 'springgreen3',
+  'palegreen1', 'pink1', 'violetred1', 'firebrick2'))
 
-violence.mods <- tab_model(violence.nofemale, violence.female, violence.female.age)
+jpeg('~/Documents/Northwestern/projects/violence_sex_development/plots/pastyear_violence_ses-2.jpg', res=300, units='mm', width=120, height=75)
+prop_pastyear_plot
+dev.off() 
 
+viol_df$Sex <- recode(viol_df$female, `1`='Female', `0`='Male')
+viol_df$Sex <- ordered(viol_df$Sex, c('Male', 'Female'))
 
-### 2) DO FEMALES EXPERIENCE MORE SEVERE INT SYMP IS THAN MALES, DOES GAP WIDEN ACROSS DEV
-### internalize.female is the main effect only model (female signif at p = 0.0135)
-### internalize.female.age is the model with interaction (interact not signif)
-### for reporting purposes:
-### confint(internalize.female) = (43.1597, 68.4616), var.est= 55.04156
-### confint(internalize.female.age) = (43.1956, 68.505), var.est= 55.03
-
-internalize.nofemale <- lmer(RCADS_sum ~ age_lab + (1|subid), data = final_df, na.action =  na.exclude)
-internalize.female <- update(internalize.nofemale, ~ . + female, data = final_df)
-internalize.female.age <- update(internalize.female, ~ . + female:age_lab, data = final_df)
-anova(internalize.nofemale, internalize.female, REML = F)
-anova(internalize.female, internalize.female.age, REML = F)
-confint(internalize.female, method = 'boot')
-# plot(internalize.female, resid(., type = 'n') ~ fitted(.)|sesid, abline=0)
-
-internalize.mods <- tab_model(internalize.nofemale, internalize.female, internalize.female.age)
-
-################################################################################
-### 3) CORRELATION OF VIOLENCE AND INTERNALIZING SYMPTOM SEVERITY ##############
-### for each subject id, we sample either sesid=1 or sesid = 2 with equal prob.
-### this sampling is done for males only, females only, and both combined.
-### the correlations are calculated for each of the three cases and saved.
-### Repeat for 1000 times for the bootstrap interval and estimate
-
-rm = rep(NA, 1000)
-rf = rep(NA, 1000)
-ra = rep(NA, 1000)
-for(i in c(1:1000)) {
-  female.sampled.time <- final_df |> filter(female == 1) |> group_by(subid) |> slice_sample(n=1)
-  male.sampled.time <- final_df |> filter(female == 0) |> group_by(subid) |> slice_sample(n=1)
-  combined.sampled.time <- final_df |> group_by(subid) |> slice_sample(n=1)
-  ra[i] <- with(combined.sampled.time, cor(num_pastyear, RCADS_sum, use = 'complete.obs'))
-  rm[i] <- with(male.sampled.time, cor(num_pastyear, RCADS_sum, use = 'complete.obs'))
-  rf[i] <- with(female.sampled.time, cor(num_pastyear, RCADS_sum, use = 'complete.obs'))
-}
-quantile(rm, probs = c(0.025, 0.975)) # (0.033, 0.217)
-quantile(rf, probs = c(0.025, 0.975)) # (0.206, 0.325)
-mean(ra) # 0.160
-mean(rm) # 0.124
-mean(rf) # 0.269
-
-# Exploratory
-sexviol_df <- final_df[!is.na(final_df$age_lab) & !is.na(final_df$female) &
-                       !is.na(final_df$num_pastyear) & !is.na(final_df$RCADS_sum), ]
-internalize.sexviol <- lmer(RCADS_sum ~ female*num_pastyear + (1|subid),
-                            data = sexviol_df)
-sexviol.mods <- tab_model(internalize.sexviol)
-
-sexviol_df$fit <- predict(internalize.sexviol)
-sexviol_df$female <- as.factor(sexviol_df$female)
-sexviol_df$Sex <- recode(sexviol_df$female, `1`='Female', `0`='Male')
-
-fslope <- summary(internalize.sexviol)$coefficients['num_pastyear', 'Estimate'] +
-            summary(internalize.sexviol)$coefficients['female:num_pastyear', 'Estimate']
-fintercept <- summary(internalize.sexviol)$coefficients['(Intercept)', 'Estimate'] +
-                summary(internalize.sexviol)$coefficients['female', 'Estimate']
-mslope <- summary(internalize.sexviol)$coefficients['num_pastyear', 'Estimate']
-mintercept <- summary(internalize.sexviol)$coefficients['(Intercept)', 'Estimate']
-
-sexviol_plot <- ggplot(sexviol_df, aes(num_pastyear, RCADS_sum, color=Sex)) +
-      geom_abline(slope=fslope, intercept=fintercept, color='#FF333F') +
-      geom_abline(slope=mslope, intercept=mintercept, color='#334FFF') +
-      geom_point(alpha = 0.3) + theme_linedraw() +
-      ylab('Internalizing Symptom Severity') +
+int_plot <- ggplot(viol_df, aes(num_pastyear, depression, color=Sex)) +
+      geom_smooth(method = 'lm') +
+      geom_point(alpha = 0.3, ) + theme_linedraw() +
+      ylab('Depression') +
       xlab('Number of Violent Events in the Past Year') +
       scale_color_manual(values=c('#334FFF', '#FF333F'))
 
-pdf(paste0(base_dir, 'plots/sexviol.pdf'), width=6, height=4)
-sexviol_plot
+exp_plot <- ggplot(viol_df, aes(exp_b_pos, depression, color=Sex)) +
+      geom_smooth(method = 'lm') +
+      geom_point(alpha = 0.3) + theme_linedraw() +
+      ylab('Depression') +
+      xlab('Salience Network Expansion') +
+      scale_color_manual(values=c('#334FFF', '#FF333F'))
+
+fc_plot <- ggplot(viol_df, aes(FC_b_pos, depression, color=Sex)) +
+      geom_smooth(method = 'lm') +
+      geom_point(alpha = 0.3) + theme_linedraw() +
+      ylab('Depression') +
+      xlab('Salience Network Connectivity') +
+      scale_color_manual(values=c('#334FFF', '#FF333F'))
+
+blank_plot <- ggplot() + theme_void()
+combined <- ggarrange(
+  int_plot, blank_plot, exp_plot, fc_plot, 
+  nrow = 2, ncol = 2, common.legend = TRUE, legend = "bottom"
+  ) 
+
+##### Export
+base_dir <- '~/Documents/Northwestern/projects/violence_sex_development/plots/'
+png(paste0(base_dir, 'sn_interaction_plots.png'), width=2000, height=2000, res=300)
+combined 
 dev.off()
 
-################################################################################
-### 4) CONTROLLING FOR PEER STRESSOR EVENTS, SEX DIFF IN IS NO LONGER SIGNIF ###
-### control.stress is the main effect only model (female signif at p = 0.0156)
-# ^ ... THIS DOESN'T EXIST. Do you mean peer.female?
-### control.stress.female is the model with interaction (interact not signif)
-# ^ ... THIS DOESN'T EXIST. Do you mean peer.female.stress?
+################### Model
+d1 <- d[d$sesid == 1, ]
+d2 <- d[d$sesid == 2, ]
+d2[, c('depression', 'num_pastyear', 'age_mri', 'exp_b_pos', 'FC_b_pos')] <- scale(d2[, c('depression', 'num_pastyear', 'age_mri', 'exp_b_pos', 'FC_b_pos')])
 
-int2.nofemale <- lmer(RCADS_sum ~ age_lab + peer_conflict + (1|subid), data=final_df, na.action = na.exclude)
-int2.female <- update(int2.nofemale, ~. + female)
-int2.female.peer <- update(int2.female, ~. + female:peer_conflict)
+# use these for poster
+boo1 <- lm(depression ~ num_pastyear*female, d=d2) #sig: female, and femaleXnum_pastyear
+boo2 <- lm(exp_b_pos ~ num_pastyear*female, d=d2) #sig: none
+boo2.2 <- lm(FC_b_pos ~ num_pastyear*female, d=d2) #sig: female
+boo3 <- lm(depression ~ exp_b_pos*female, d=d2) #sig: exp_b_pos (not when add 7 subjs with removed vertices), female
+boo3.2 <- lm(depression ~ FC_b_pos*female, d=d2) #sig: FC_b_pos, female, FC_b_posXfemale
+tab_model(boo1, boo2, boo2.2, show.ci = FALSE)
+tab_model(boo3, boo3.2, show.ci = FALSE)
 
-anova(int2.nofemale, int2.female, REML = F)
-anova(int2.female, int2.female.peer, REML = F)
+# sensitivity
+goo1 <- lm(depression ~ age_mri + black + white + otherrace + BMIperc + PubCat + num_pastyear*female, d=d2) #sig: female, and femaleXnum_pastyear
+goo2 <- lm(exp_b_pos ~ age_mri + black + white + otherrace + BMIperc + PubCat + num_pastyear*female, d=d2) #sig: black, femaleXnum_pastyear
+goo2.2 <- lm(FC_b_pos ~ age_mri + black + white + otherrace + BMIperc + PubCat + num_pastyear*female, d=d2) #sig: black, female
+goo3 <- lm(depression ~ age_mri + black + white + otherrace + BMIperc + PubCat + exp_b_pos*female, d=d2) #sig: female
+goo3.2 <- lm(depression ~ age_mri + black + white + otherrace + BMIperc + PubCat + FC_b_pos*female, d=d2) #sig: FC_b_pos, female, FC_b_posXfemale
 
-confint(int2.female.peer, method = 'boot')
+d1b <- d1
+d2b <- d2
+names(d1b)[4:length(names(d1b))] <- paste0(names(d1b)[4:length(names(d1b))], '_1')
+names(d2b)[4:length(names(d2b))] <- paste0(names(d2b)[4:length(names(d2b))], '_2')
+d1b <- d1b[, c(1, 3:length(names(d1b)))]
+d2b <- d2b[, c(1, 3:length(names(d2b)))]
+df <- merge(d1b, d2b) #just keep the subjects that have both sessions
 
-int2.mods <- tab_model(int2.nofemale, int2.female, int2.female.peer)
+# ideally would like to be able to use these ultimately
+foo1 <- lm(depression_2 ~ num_pastyear_2*female + age_mri_2 + depression_1, d=df) #sig: depression_1, female (when add 7 subjs)
+foo2 <- lm(exp_b_pos_2 ~ num_pastyear_2*female + age_mri_2 + exp_b_pos_1, d=df) #sig: exp_b_pos_1
+foo2.2 <- lm(FC_b_pos_2 ~ num_pastyear_2*female + age_mri_2 + FC_b_pos_1, d=df) #sig: FC_b_pos_1  and female (when add 7 subjs)
+foo3 <- lm(depression_2 ~ exp_b_pos_2*female + age_mri_2 + depression_1, d=df) #sig: female and depression_1
+foo3.2 <- lm(depression_2 ~ FC_b_pos_2*female + age_mri_2 + depression_1, d=df) #sig: FC_b_pos_2, female, depression_1, FC_b_pos_2:female
 
-################################################################################
-### 5) Amygdala connectivity
-# nothing significant... hm, no
-#https://stats.stackexchange.com/questions/242109/model-failed-to-converge-warning-in-lmer
+doo1 <- lm(depression_2 ~ num_pastyear_2*female + age_mri_2, d=df) #sig: none
+doo2 <- lm(exp_b_pos_2 ~ num_pastyear_2*female + age_mri_2, d=df) #sig: none
+doo2.2 <- lm(FC_b_pos_2 ~ num_pastyear_2*female + age_mri_2, d=df) #sig: none
+doo3 <- lm(depression_2 ~ exp_b_pos_2*female + age_mri_2, d=df) #sig: exp_b_pos_2, female 
+doo3.2 <- lm(depression_2 ~ FC_b_pos_2*female + age_mri_2, d=df) #sig: FC_b_pos_2, female, FC_b_pos_2Xfemale
 
-region2 <- lmer(region2 ~ age_lab + female + num_pastyear + (1|subid), data = final_df, na.action = na.exclude)
-region2.interact <- update(region2, ~. + female:num_pastyear)
-region14 <- lmer(region14 ~ age_lab + female + num_pastyear + (1|subid),
-                            data = final_df, na.action = na.exclude)
-region14.interact <- update(region14, ~. + female:num_pastyear)
-region237 <- lmer(region237 ~ age_lab + female + num_pastyear + (1|subid), data = final_df, na.action = na.exclude)
-region237.interact <- update(region237, ~. + female:num_pastyear)
-region261 <- lmer(region261 ~ age_lab + female + num_pastyear + (1|subid), data = final_df, na.action = na.exclude)
-region261.interact <- update(region261, ~. + female:num_pastyear)
-region281 <- lmer(region281 ~ age_lab + female + num_pastyear + (1|subid), data = final_df, na.action = na.exclude)
-region281.interact <- update(region281, ~. + female:num_pastyear)
-
-amygconn_main_mods <- tab_model(region2, region14, region237, region261, region281,
-                      digits=3)
-
-amygconn_int_mods <- tab_model(region2.interact, region14.interact,
-                     region237.interact, region261.interact, region281.interact,
-                     digits=3)
-
-# Adjusting for multiple comparisons using FDR
-# age
-p.adjust(c(0.211, 0.472, 0.009, 0.608, 0.659), method='fdr')
-
-# female
-p.adjust(c(0.311, 0.045, 0.266, 0.223, 0.106), method='fdr')
-
-# violence
-p.adjust(c(0.656, 0.447, 0.526, 0.840, 0.342), method='fdr')
-
-# female x violence
-p.adjust(c(0.037, 0.538, 0.083, 0.117, 0.221), method='fdr')
-
-
-################################################################################
-### SOME DIAGNOSTICS, I.E. PART OF THE LIMITATIONS
-# check random effects are normal with qqplots
-qqnorm(scale(ranef(violence.male)[,1])); abline(0,1)
-qqnorm(scale(ranef(violence.male.age)[,1])); abline(0,1)
-
-qqnorm(scale(ranef(internalize.female)$subid[,1])); abline(0,1)
-qqnorm(scale(ranef(internalize.female.age)$subid[,1])); abline(0,1)
-
-qqnorm(scale((ranef(control.stress)$subid[,1]))); abline(0,1)
-qqnorm(scale(ranef(control.stress.female)$subid[,1])); abline(0,1)
-
-qqnorm(scale(ranef(region2)$subid[,1])); abline(0,1)
-qqnorm(scale(ranef(region237)$subid[,1])); abline(0,1)
-qqnorm(scale(ranef(region261)$subid[,1])); abline(0,1)
-qqnorm(scale(ranef(region281)$subid[,1])); abline(0,1)
-
-# check pearson residuals of regressions
-plot(violence.female, resid(.) ~ fitted(.))
-plot(internalize.female, resid(.) ~ fitted(.))
-plot(control.stress, resid(.) ~ fitted(.))
-plot(region2, resid(.) ~ fitted(.))
-plot(region14, resid(.) ~ fitted(.))
-plot(region237, resid(.) ~ fitted(.))
-plot(region261, resid(.) ~ fitted(.))
-plot(region281, resid(.) ~ fitted(.))
-## residuals for regions 14, 281 have clusters, likely due to female/male
-
-### GOF FOR NB GLMER
-# checking the nAGQ provides good coefficient estimates
-violence.female.nagq0 <- update(violence.female, nAGQ = 0)
-violence.female.nagq15 <- update(violence.female, nAGQ = 15)
-violence.female.nagq25 <- update(violence.female, nAGQ = 25)
-violence.female.nagq0@beta; (violence.female.nagq0 |> summary())$varcor
-violence.female.nagq15@beta; (violence.female.nagq15 |> summary())$varcor
-violence.female.nagq25@beta; (violence.female.nagq25 |> summary())$varcor
+coo1 <- lm(depression_2 ~ num_pastyear_2*female, d=df) #sig: 
+coo2 <- lm(exp_b_pos_2 ~ num_pastyear_2*female, d=df) #sig: 
+coo2.2 <- lm(FC_b_pos_2 ~ num_pastyear_2*female, d=df) #sig: 
+coo3 <- lm(depression_2 ~ exp_b_pos_2*female, d=df) #sig: 
+coo3.2 <- lm(depression_2 ~ FC_b_pos_2*female, d=df) #sig:

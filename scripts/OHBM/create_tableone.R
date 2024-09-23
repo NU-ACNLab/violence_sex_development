@@ -1,7 +1,7 @@
 ### This script creates Table 1
 ###
 ### Ellyn Butler
-### September 22, 2024
+### October 13, 2023
 
 
 library(table1) # v 1.4.3
