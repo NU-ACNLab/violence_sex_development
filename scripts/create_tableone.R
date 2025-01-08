@@ -1,49 +1,38 @@
 ### This script creates Table 1
 ###
 ### Ellyn Butler
-### September 22, 2024
+### October 9, 2024
 
 
 library(table1) # v 1.4.3
-library(dplyr) # v 1.0.10
-
-# T1
-#df <- read.csv('~/Documents/Northwestern/projects/violence_mediation/data/combined_data.csv')
-#df <- df[df$sesid == 1, ]
-
-demo_df <- read.csv('~/Documents/Northwestern/studies/mwmh/data/raw/demographic/MWMH_EB_July2022.csv')
-df <- read.csv('~/Documents/Northwestern/studies/mwmh/data/processed/demographic/demographics_2023-12-04.csv')
-demo_df$subid <- paste0('MWMH', demo_df$ID)
+library(dplyr) # v 1.1.4
 
 
-df <- merge(df, demo_df, by='subid')
-#df <- merge(df, demo_df2)
+d2 <- read.csv('~/Documents/Northwestern/projects/violence_sex_development/data/combined_data_2024-10-07.csv')
+d2 <- d2[d2$sesid == 2, ]
+d2 <- d2[!is.na(d2$exp_b_pos) & !is.na(d2$FC_b_pos), ]
 
-df$Age <- df$age_mri
+d2$Age <- d2$age_mri
 
-df$Sex <- recode(df$female, `1`='Female', `0`='Male')
-df$Sex <- factor(df$Sex)
+d2$Sex <- recode(d2$female, `1`='Female', `0`='Male')
+d2$Sex <- factor(d2$Sex)
 
-df$Black <- recode(df$black, `1`='Yes', `0`='No')
-df$Black <- factor(df$Black)
+d2$Black <- recode(d2$black, `1`='Yes', `0`='No')
+d2$Black <- factor(d2$Black)
 
-df$White <- recode(df$white, `1`='Yes', `0`='No')
-df$White <- factor(df$White)
+d2$White <- recode(d2$white, `1`='Yes', `0`='No')
+d2$White <- factor(d2$White)
 
-df$Hispanic <- recode(df$v1.c.ahispan, `1`='Yes', `0`='No')
-df$Hispanic <- factor(df$Hispanic)
+d2$Hispanic <- recode(d2$hispanic, `1`='Yes', `0`='No')
+d2$Hispanic <- factor(d2$Hispanic)
 
-#df$Violence <- recode(df$ever, `1`='Violence Exposed', `0`='Not Violence Exposed')
+d2$BMI_Percentile <- d2$BMIperc
+d2$Puberty_Category <- d2$PubCat
+d2$Income_to_Poverty_Ratio <- d2$IPR
+d2$Number_of_Violent_Events <- d2$num_pastyear
+d2$Depression <- d2$depression
 
-#df$Session <- df$sesid
 
-df$Session <- recode(df$sesid, `1`='Session 1', `2`='Session 2')
-
-df <- df[!is.na(df$Age), ]
-
-table1(~ Age + Sex + Black + White + Hispanic | Session, data=df)
-
-# Number of subjects with both time points
-subid1 <- df[df$sesid == 1, 'subid']
-subid2 <- df[df$sesid == 2, 'subid']
-sum(subid1 %in% subid2)
+table1(~ Age + Black + White + Hispanic + BMI_Percentile + 
+    Puberty_Category + Income_to_Poverty_Ratio + Number_of_Violent_Events +
+    Depression | Sex, data=d2)

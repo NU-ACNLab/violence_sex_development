@@ -8,5 +8,6 @@ models/*
 notes/*
 launch/*
 tables/*
+publication/*
 *.rds
 *.csv
