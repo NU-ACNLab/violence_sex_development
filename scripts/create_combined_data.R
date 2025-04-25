@@ -108,7 +108,7 @@ d2[!is.na(d2$age_mri) & is.na(d2$exp_b_pos),]
 # autorecon in fmriprep
 
 # T1 who have complete T2
-d2b <- d2[!is.na(d2$FC_b_pos), ] #the 220
+d2b <- d2[!is.na(d2$FC_b_pos), ] 
 d1b <- d1[d1$subid %in% d2b$subid,]
 sum(is.na(d1b$depression)) #0
 sum(is.na(d1b$age_mri)) #3
@@ -238,7 +238,7 @@ table(mri_df$num_pastyear)
 summary(mri_df$days_mri_minus_lab)
 
 
-########### netort data
+########### Write the data
 
 write.csv(final_df, '/projects/b1108/projects/violence_sex_development/data/combined_data_2024-11-01.csv', row.names=FALSE)
 
