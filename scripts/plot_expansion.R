@@ -3,7 +3,7 @@
 ### network, splitting the participants at the median for depression
 ###
 ### Ellyn Butler
-### September 11, 2024
+### September 11, 2024 - May 3, 2025
 
 library(ciftiTools)
 library(dplyr)
@@ -100,12 +100,16 @@ view_xifti_surface(highmap, zlim = c(0, 1), colors = 'BuPu') #What is up with th
 
 ######### Illustration with single male subjects
 
-# high depression, high expansion - MWMH379
+### high depression, high expansion - MWMH379
 d2[d2$female == 0 & d2$depression > 20 & d2$exp_b_pos > .3, ]
 highdep <- readRDS('/projects/b1108/studies/mwmh/data/processed/neuroimaging/surfnet/sub-MWMH379/ses-2/network_membership_pos.rds')
-view_xifti_surface(highdep$active, idx = 8)
 
-# low depression, low expansion - MWMH271
+netimg_highdep <- readRDS('/projects/b1108/studies/mwmh/data/processed/neuroimaging/surfnet/sub-MWMH379/ses-2/networks_img.rds')
+netimg_highdep$active_engagement <- highdep$active*netimg_highdep$subjICmean
+
+### low depression, low expansion - MWMH271
 d2[d2$female == 0 & d2$depression < 15 & d2$exp_b_pos < .2, ]
 lowdep <- readRDS('/projects/b1108/studies/mwmh/data/processed/neuroimaging/surfnet/sub-MWMH271/ses-2/network_membership_pos.rds')
 view_xifti_surface(lowdep$active, idx = 8)
+
+######### Illustration of overlap across 17 networks
