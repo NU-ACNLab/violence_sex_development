@@ -7,6 +7,10 @@
 
 library(ciftiTools)
 library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(png)
+library(grid)
 #ciftiTools.setOption('wb_path', '/Applications/workbench')
 ciftiTools.setOption('wb_path', '/projects/b1108/software/workbench')
 
@@ -113,3 +117,28 @@ lowdep <- readRDS('/projects/b1108/studies/mwmh/data/processed/neuroimaging/surf
 view_xifti_surface(lowdep$active, idx = 8)
 
 ######### Illustration of overlap across 17 networks
+plotdir <- '/projects/b1108/projects/violence_sex_development/plots/'
+#plotdir <- '~/Documents/Northwestern/projects/violence_sex_development/plots/'
+
+# Export plots
+netimg_highdep$subjICmean$meta$cifti$names <- c('Visual A', 'Visual B',
+    'Somatomotor A', 'Somatomotor B', 'Dorsal Attention A', 
+    'Dorsal Attention B', 'Salience Ventral Attention A', 
+    'Salience Ventral Attention B', 'Limbic A', 'Limbic B', 'Control A', 
+    'Control B', 'Control C', 'Default A', 'Default B', 'Default C', 
+    'Temporal Parietal')
+plot(netimg_highdep$subjICmean, fname=paste0(plotdir, 'sub-MWMH379_ses-2'),  idx=1:17)
+
+# Load plots
+for (i in 1:17) {
+    ICmean <- readPNG(paste0(plotdir, 'sub-MWMH379_ses-2_', netimg_highdep$subjICmean$meta$cifti$names[i], '.png'))
+    assign(paste0('IC', i), ICmean)
+}
+
+pdf(paste0(plotdir, 'sub-MWMH379_ses-2_IC_mean.pdf'), width = 7, height = 12) # May 3, 2025: This isn't working
+grid.arrange(rasterGrob(IC1), rasterGrob(IC2), rasterGrob(IC3), rasterGrob(IC4), 
+             rasterGrob(IC5), rasterGrob(IC6), rasterGrob(IC7), rasterGrob(IC8), 
+             rasterGrob(IC9), rasterGrob(IC10), rasterGrob(IC11), 
+             rasterGrob(IC12), rasterGrob(IC13), rasterGrob(IC14), 
+             rasterGrob(IC15), rasterGrob(IC16), rasterGrob(IC17), ncol = 3)
+dev.off()
